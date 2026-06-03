@@ -10,6 +10,7 @@ window_size = 32;
 delta_t = 74 * 10^(-6);
 img_path = "data\PIV\FMT Results\AoA15_final\B00001.tif";
 
+%TODO - what is the datum in DaVis?
 calibration_file = "data\PIV\FMT Results\cal_final\B00001.tif";
 pixel_to_mm = calibration(calibration_file, false);
 disp(["pix per mm", 1/pixel_to_mm]) %for debugging
@@ -39,7 +40,7 @@ plot_processed_data(X, Y, v_x, v_y, n_cols, n_rows);
 %figure
 %plot_velocity_field(V, mask);
 
-
+compare_res_w_davis(processed_data_path, img_path)
 
 %% Functions
 
@@ -109,7 +110,7 @@ function [x_disp_pix, y_disp_pix] = find_displacement_of_window(img1, img2, wind
     window1 = double(window1) - mean(window1(:));
     window2 = double(window2) - mean(window2(:));
     
-    corr_map = xcorr2(window1, window2); %todo - check if vectors are in reversed order. If so, change the order
+    corr_map = xcorr2(window1, window2);
     [~, vectorized_index] = max(corr_map(:));
     %ind_y = ceil(vectorized_index/(2*window_size-1));
     %ind_x = mod(vectorized_index, (2*window_size-1))+1;
@@ -190,6 +191,8 @@ function [] = plot_processed_data(X, Y, v_x, v_y, n_cols, n_rows)
     v_x = reshape(v_x, n_cols, n_rows)';
     v_y = reshape(v_y, n_cols, n_rows)';
     
+    % the davis grids are always one too large (both vertically and horizontally) and have an edge that is
+    % just zeros, so I am simply cutting it out.
     X = X(1:end-1, 1:end-1);
     Y = Y(1:end-1, 1:end-1);
     v_x = v_x(1:end-1, 1:end-1);
@@ -244,5 +247,18 @@ function [diffs] = compare_res_w_davis(processed_data_path, img_path)
     title("MATLAB")
 
     nexttile
+    v_x = reshape(v_x, n_cols, n_rows)';
+    v_y = reshape(v_y, n_cols, n_rows)';
     
+    v_x = v_x(1:end-1, 1:end-1);
+    v_y = v_y(1:end-1, 1:end-1);
+    
+    %size([v_x, v_y])
+    %size(V_matlab)
+    diffs = V_matlab
+    diffs(:, :, 1) = diffs(:, :, 1) - v_x;
+    diffs(:, :, 2) = diffs(:, :, 2) - v_y;
+    %diffs = V_matlab - [v_x, v_y]; %diff between matlab and DaVis code
+    plot_velocity_field(diffs, mask);
+    title("Difference")
 end
