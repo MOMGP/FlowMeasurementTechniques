@@ -2,10 +2,13 @@
 clc, clear, close
 
 window_size = 32;
-pixel_to_mm = 1; %TODO - must change
-delta_t = 0.01;
+pixel_to_mm = 1;
+delta_t = 74 * 10^(-6);
 %TODO - change
 
+calibration_file = "C:\Users\mario\OneDrive\Desktop\FMT\FlowMeasurementTechniques\data\PIV\FMT Results\cal_final\B00001.tif";
+pixel_to_mm = calibration(calibration_file);
+disp(["pix per mm", 1/pixel_to_mm])
 [img1, img2] = split_image("data\PIV\FMT Results\AoA15_final\B00001.tif");
 %figure(1)
 %imshow(img1)
@@ -30,12 +33,12 @@ for i = 1:windowed_hor_size
         [dx, dy] = find_displacement_of_window(img1, img2, window_size, i, j);
         %fprintf("dx=%f dy=%f\n", dx, dy); %for debugging
 
-        V(j,i,1) = dx *pixel_to_mm/delta_t;
-        V(j,i,2) = dy * pixel_to_mm/delta_t;
+        V(j,i,1) = dx *pixel_to_mm/delta_t / 1000; %to convert to m/s
+        V(j,i,2) = dy * pixel_to_mm/delta_t / 1000; %to convert to m/s
     end
 end
 
-plot_velocity_field(V, windowed_hor_size, windowed_vert_size, window_size);
+plot_velocity_field(V, windowed_hor_size, windowed_vert_size, window_size, pixel_to_mm);
 
 %TODOs still - add overlap, maybe multipass, FFT, wtf is normalized cross
 %correlation??
@@ -43,6 +46,23 @@ plot_velocity_field(V, windowed_hor_size, windowed_vert_size, window_size);
 
 
 %% Functions
+
+function [pix_to_mm] = calibration(file_name)
+    figure
+    img = imread(file_name);
+    imshow(img, []);
+    hold on
+    
+    x1 = 330;
+    x2 = 1050;
+    y1 = 1160;
+    y2 = 1150;
+
+    plot([x1, x2], [y1, y2]) %set to 80 mm (I think)
+
+    pix_to_mm = 80/sqrt((x2-x1)^2 + (y2-y1)^2);
+end
+
 
 function [img1, img2] = split_image(file_name)
 img = imread(file_name);
@@ -72,21 +92,34 @@ y_disp_pix = ind_y - window_size;
 end
 
 
-function plot_velocity_field(V, windowed_hor_size, windowed_vert_size, window_size)
+function plot_velocity_field(V, windowed_hor_size, windowed_vert_size, window_size, pixel_to_mm)
 
     [X,Y] = meshgrid( ...
         (1:windowed_hor_size)*window_size - window_size/2, ...
         (1:windowed_vert_size)*window_size - window_size/2);
+    X = X * pixel_to_mm;
+    Y = Y * pixel_to_mm;
+
     %disp(max(V(:))) %for debugging
     v_x = V(:,:,1);
     v_y = V(:,:,2);
+    vel_magnitudes = sqrt(v_x.^2+v_y.^2);
+    
+
 
     figure
+    %plotting the magnitude in terms of background color - like DaVis
+    imagesc(X(1,:), Y(:,1), vel_magnitudes)
+    set(gca,'YDir','normal')
+    
+    hold on
     
     quiver(X, flipud(Y), v_x, flipud(v_y), 'r');
 
+
     axis equal
     drawnow
+
 end
 
 
