@@ -136,7 +136,7 @@ function plot_velocity_field(V, mask)
     [X,Y] = meshgrid( ...
         (1:windowed_hor_size)*window_size - window_size/2, ...
         (1:windowed_vert_size)*window_size - window_size/2);
-    X = X * pixel_to_mm;
+    X = X * pixel_to_mm - 126;
     Y = Y * pixel_to_mm;
     
     %disp(max(V(:))) %for debugging
@@ -162,8 +162,8 @@ function plot_velocity_field(V, mask)
     set(gca,'YDir','normal')
     axis equal
     axis tight
-    colormap(parula)
-    colorbar
+    %colormap(parula)
+    %colorbar
     clim([0 20]);
 
     hold on
@@ -206,8 +206,8 @@ function [] = plot_processed_data(X, Y, v_x, v_y, n_cols, n_rows)
     set(gca,'YDir','normal')
     axis equal
     axis tight
-    colormap(parula)
-    colorbar
+    %colormap(parula)
+    %colorbar
 
     hold on
     quiver(X, Y, v_x, v_y, 'r')
@@ -262,5 +262,7 @@ function [diffs] = compare_res_w_davis(processed_data_path, img_path)
     diffs(:, :, 2) = diffs(:, :, 2) - v_y;
     %diffs = V_matlab - [v_x, v_y]; %diff between matlab and DaVis code
     plot_velocity_field(diffs, mask);
+    colormap(parula)
+    colorbar
     title("Difference")
 end
