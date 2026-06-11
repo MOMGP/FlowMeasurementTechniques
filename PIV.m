@@ -136,7 +136,7 @@ function plot_velocity_field(V, mask)
     [X,Y] = meshgrid( ...
         (1:windowed_hor_size)*window_size - window_size/2, ...
         (1:windowed_vert_size)*window_size - window_size/2);
-    X = X * pixel_to_mm;
+    X = X * pixel_to_mm - 126;
     Y = Y * pixel_to_mm;
     
     %disp(max(V(:))) %for debugging
